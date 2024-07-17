@@ -328,7 +328,7 @@ def __(letter_metadata):
 def __(mo):
     #this cell produces the custom query form
 
-    queryform = mo.ui.text_area(label="Enter a selection query and zero or more highlight queries, each separated by an empty line. Use STAMQL syntax:",full_width=True).form()
+    queryform = mo.ui.text_area(label="Enter a selection query and zero or more highlight queries, each separated by an empty line. Use STAMQL syntax:",full_width=True, rows=25).form()
 
     mo.md(f"""
     ## Custom Queries
@@ -369,6 +369,57 @@ def __(mo):
         SELECT ANNOTATION ?letter WHERE
             DATA "brieven-van-hooft-metadata" "dbnl_id";
             DATA "brieven-van-hooft-metadata" "birthyear" < 1600;
+        ```
+
+        ### Display a specific letter and highlight specific Part-of-Speech tags
+
+        ```
+        SELECT ANNOTATION ?letter WHERE
+            DATA "brieven-van-hooft-metadata" "dbnl_id" = "hoof001hwva02_01_0032";
+
+        SELECT ANNOTATION ?adj WHERE
+            RELATION ?letter EMBEDS;
+            DATA "gustave-pos" "head" = "ADJ";
+
+        SELECT ANNOTATION ?adv WHERE
+            RELATION ?letter EMBEDS;
+            DATA "gustave-pos" "head" = "BIJW";   
+
+        ```
+
+
+        ### Search for words with a specific text and part-of-Speech tag
+
+        In letters, search for words with a specific text that also have a specific PoS tag:
+
+        ```
+        SELECT ANNOTATION ?letter WHERE
+            DATA "brieven-van-hooft-metadata" "dbnl_id";
+        {
+          SELECT ANNOTATION ?w WHERE
+            RELATION ?letter EMBEDS;
+            DATA "https://w3id.org/folia/v2/" "elementtype" = "w";
+            TEXT " Naerden";
+          {
+            SELECT ANNOTATION ?pos WHERE
+                RELATION ?w EQUALS;
+                DATA "gustave-pos" "head" = "N";
+           }  
+        }
+        ```
+
+        Alternative (TODO: DEBUG!):
+
+        ```
+        SELECT ANNOTATION ?letter WHERE
+            DATA "brieven-van-hooft-metadata" "dbnl_id";
+        {
+          SELECT TEXT ?w WHERE
+            RELATION ?letter EMBEDS;
+            TEXT " Naerden";
+            DATA "https://w3id.org/folia/v2/" "elementtype" = "w";
+            DATA "gustave-pos" "head" = "N";      
+        }
         ```
         """
     )
