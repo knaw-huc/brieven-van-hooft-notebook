@@ -143,7 +143,7 @@ def __(mo, store):
     mo.md(f"""
     ### Exploring vocabularies
 
-    Explore keys and values in a vocabulary:
+    Yuo can explore the keys and values in a vocabulary. If you select any values here, they will be used to constrain the letters shown in the next section.
 
     * {chosen_dataset}
     """)
@@ -191,20 +191,31 @@ def __(
     chosen_dataset,
     chosen_key,
     key_dbnl_id,
+    mo,
     polars,
     store,
     vocab_selection,
 ):
     #constrain letters given selected data
 
-    data_values = "|".join([f"\"{str(x[0])}\"" for x in vocab_selection.value.select(polars.selectors.first()).iter_rows()])
-    data_query = f"""SELECT ANNOTATION ?a WHERE DATA "{chosen_dataset.value}" "{chosen_key.value}" = {data_values};"""
+    data_values = "|".join([str(x[0]) for x in vocab_selection.value.select(polars.selectors.first()).iter_rows()])
+    data_query = f"""SELECT ANNOTATION ?a WHERE DATA "{chosen_dataset.value}" "{chosen_key.value}" = "{data_values}";"""
     matching_letters = []
-    for result in store.query(data_query):
-        if result["a"].test_data(key_dbnl_id):
-            matching_letters.append(next(result["a"].data(key_dbnl_id)))
+    for _annotation in store.query(data_query):
+        if _annotation["a"].test_data(key_dbnl_id):
+            matching_letters.append(next(_annotation["a"].data(key_dbnl_id)))
+        #else:
+        #    for _letter in _annotation["a"].related_text(stam.TextSelectionOperator.embedded(), limit=5).annotations(key_dbnl_id):
+        #        _dbnl_id = next(_letter.data(key_dbnl_id))
+        #        if _dbnl_id not in matching_letters:
+        #            matching_letters.append(_dbnl_id)
 
-    return data_query, data_values, matching_letters, result
+    if matching_letters:
+        _md = mo.md(f"{len(matching_letters)} matching letters were found (query was: ``{data_query}``), the selection below is constrained accordingly:" )
+    else:
+        _md = mo.md(f"No matching letters found (query was ``{data_query}``)")
+    _md
+    return data_query, data_values, matching_letters
 
 
 @app.cell
@@ -279,7 +290,7 @@ def __(
             _highlights.append("""@VALUETAG SELECT ANNOTATION ?w WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "w";""")
             _highlights.append("""@VALUETAG SELECT ANNOTATION ?p WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "p";""")
             _highlights.append("""@VALUETAG SELECT ANNOTATION ?s WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "s";""")    
-        
+
         _html = store.view(query, *_highlights)
         highlights_md = "".join(f"* ``{hq}``\n" for hq in _highlights)
         for _letter in store.query(query):
@@ -298,18 +309,18 @@ def __(highlights_md, mo, query):
     mo.md(f"""
 
         The following selection query and (optionally) highlight queries were used to render the above visualisation:
-        
+
         * ``{query}``
         {highlights_md}
 
         The table below shows all the metadata that was associated with this letter:   
-    """) 
+    """)
     return
 
 
 @app.cell
 def __(letter_metadata):
-    letter_metadata    
+    letter_metadata
     return
 
 
@@ -324,7 +335,6 @@ def __(mo):
 
     {queryform}
     """)
-
     return queryform,
 
 
