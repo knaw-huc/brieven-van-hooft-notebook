@@ -168,8 +168,8 @@ def __(chosen_dataset, mo, store):
 def __(store):
     # initialize some data we need later
     dataset_metadata = store.dataset("brieven-van-hooft-metadata")
-    key_letter_id = dataset_metadata.key("letter_id")
-    return dataset_metadata, key_letter_id
+    key_dbnl_id = dataset_metadata.key("dbnl_id")
+    return dataset_metadata, key_dbnl_id
 
 
 @app.cell
@@ -190,48 +190,42 @@ def __(chosen_key, dataset, mo, natsorted, polars):
 def __(
     chosen_dataset,
     chosen_key,
-    key_letter_id,
-    mo,
-    natsorted,
+    key_dbnl_id,
     polars,
     store,
     vocab_selection,
 ):
-    #Find letters given selected data
+    #constrain letters given selected data
 
     data_values = "|".join([f"\"{str(x[0])}\"" for x in vocab_selection.value.select(polars.selectors.first()).iter_rows()])
     data_query = f"""SELECT ANNOTATION ?a WHERE DATA "{chosen_dataset.value}" "{chosen_key.value}" = {data_values};"""
     matching_letters = []
     for result in store.query(data_query):
-        if result["a"].test_data(key_letter_id):
-            matching_letters.append(next(result["a"].data(key_letter_id)))
+        if result["a"].test_data(key_dbnl_id):
+            matching_letters.append(next(result["a"].data(key_dbnl_id)))
 
-    if matching_letters:
-        matching_letters_md = "\n".join(natsorted(f"* ``{str(x)}``" for x in matching_letters))
-        _r = mo.md(f"""The following letters match your query (``{data_query}``): 
-
-    {matching_letters_md}
-    """)
-    elif data_query and data_values:
-        _r = mo.md(f"""There were no letters matching your query (``{data_query}``)""")
-    else:
-        _r = mo.md(f"""(no data query done)""")
-    _r        
-    return (
-        data_query,
-        data_values,
-        matching_letters,
-        matching_letters_md,
-        result,
-    )
+    return data_query, data_values, matching_letters, result
 
 
 @app.cell
-def __(key_letter_id, mo, natsorted):
+def __(key_dbnl_id, matching_letters, mo, natsorted, polars):
     #this cell presents a form to view letters and annotations
 
-    available_letters = natsorted(str(x) for x in key_letter_id.data())
-    chosen_letter = mo.ui.dropdown(options=available_letters)
+    if matching_letters:
+        available_letters = polars.DataFrame(
+            data=natsorted((str(x) for x in matching_letters)),
+            schema=["dbnl_id"],
+            orient="row"
+        )
+        letter_note = "*(this selection is constrained by your data query above!)*"
+    else:
+        available_letters = polars.DataFrame(
+            data=natsorted(str(x) for x in key_dbnl_id.data()),
+            schema=["dbnl_id"],
+            orient="row"
+        )
+        letter_note = ""
+    chosen_letter = mo.ui.table(available_letters,selection="single")
     show_pos_annotations = mo.ui.checkbox()
     show_lemma_annotations = mo.ui.checkbox()
     show_part_annotations = mo.ui.checkbox()
@@ -241,7 +235,7 @@ def __(key_letter_id, mo, natsorted):
     mo.md(f"""
     ## Visualisation of Letters and Annotations
 
-    * Select a letter to visualise: {chosen_letter}
+    * Select a letter to visualise: {letter_note} {chosen_letter}
     * Show part-of-speech annotations? {show_pos_annotations}
     * Show lemma annotations? {show_lemma_annotations}
     * Show part annotations? {show_part_annotations}
@@ -251,6 +245,7 @@ def __(key_letter_id, mo, natsorted):
     return (
         available_letters,
         chosen_letter,
+        letter_note,
         show_lemma_annotations,
         show_part_annotations,
         show_pos_annotations,
@@ -269,22 +264,27 @@ def __(
     store,
 ):
     #this cell forms and runs query for letter visualisation and display the results
-
-    query = f"""SELECT ANNOTATION ?letter WHERE DATA "brieven-van-hooft-metadata" "letter_id" = "{chosen_letter.value}";"""
-    _highlights = []
-    if show_pos_annotations.value:
-        _highlights.append("""@VALUETAG SELECT ANNOTATION ?pos WHERE RELATION ?letter EMBEDS; DATA "gustave-pos" "class";""")
-    if show_lemma_annotations.value:
-        _highlights.append("""@VALUETAG SELECT ANNOTATION ?lemma WHERE RELATION ?letter EMBEDS; DATA "gustave-lem" "class";""")
-    if show_part_annotations.value:
-        _highlights.append("""@VALUETAG SELECT ANNOTATION ?part WHERE RELATION ?letter EMBEDS; DATA "brieven-van-hooft-categories" "part";""")
-    if show_structure_annotations.value:
-        _highlights.append("""@VALUETAG SELECT ANNOTATION ?w WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "w";""")
-        _highlights.append("""@VALUETAG SELECT ANNOTATION ?p WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "p";""")
-        _highlights.append("""@VALUETAG SELECT ANNOTATION ?s WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "s";""")    
-
-    _html = store.view(query, *_highlights)
-    highlights_md = "".join(f"* ``{hq}``\n" for hq in _highlights)
+    if not chosen_letter.value.is_empty():
+        _chosen_letter = chosen_letter.value.to_series()[0]
+        query = f"""SELECT ANNOTATION ?letter WHERE DATA "brieven-van-hooft-metadata" "dbnl_id" = "{_chosen_letter}";"""
+        _highlights = []
+        if show_pos_annotations.value:
+            _highlights.append("""@VALUETAG SELECT ANNOTATION ?pos WHERE RELATION ?letter EMBEDS; DATA "gustave-pos" "class";""")
+        if show_lemma_annotations.value:
+            _highlights.append("""@VALUETAG SELECT ANNOTATION ?lemma WHERE RELATION ?letter EMBEDS; DATA "gustave-lem" "class";""")
+        if show_part_annotations.value:
+            _highlights.append("""@VALUETAG SELECT ANNOTATION ?part WHERE RELATION ?letter EMBEDS; DATA "brieven-van-hooft-categories" "part";""")
+        if show_structure_annotations.value:
+            _highlights.append("""@VALUETAG SELECT ANNOTATION ?w WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "w";""")
+            _highlights.append("""@VALUETAG SELECT ANNOTATION ?p WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "p";""")
+            _highlights.append("""@VALUETAG SELECT ANNOTATION ?s WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "s";""")    
+        
+        _html = store.view(query, *_highlights)
+        highlights_md = "".join(f"* ``{hq}``\n" for hq in _highlights)
+    else:
+        _html = "(no letters selected)"
+        query = "(no query provided)"
+        highlights_md = ""
     mo.Html(_html)
     return highlights_md, query
 
@@ -324,11 +324,33 @@ def __(mo, queryform, store):
         custom_queries = [ x for x in queryform.value.split("\n\n") if x.strip() ]
         _html = store.view(custom_queries[0], *custom_queries[1:])
         if _html.find("<h2>") == -1:
-            _html = "(query did no produce any results)"
+            _html = "(custom query did no produce any results)"
     else:
-        _html = "(no query submitted)"
+        _html = "(no custom query submitted)"
     mo.Html(_html)
     return custom_queries,
+
+
+@app.cell
+def __(mo):
+    mo.md(
+        r"""
+        ## Custom Query Examples
+
+        You can copy these example queries to the custom query input and run them:
+
+        ### Metadata search
+
+        Show all letters to recipients born prior to 1600:
+
+        ```
+        SELECT ANNOTATION ?letter WHERE
+            DATA "brieven-van-hooft-metadata" "dbnl_id";
+            DATA "brieven-van-hooft-metadata" "birthyear" < 1600;
+        ```
+        """
+    )
+    return
 
 
 if __name__ == "__main__":
