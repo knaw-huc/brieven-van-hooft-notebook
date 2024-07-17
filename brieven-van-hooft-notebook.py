@@ -257,6 +257,7 @@ def __(key_dbnl_id, matching_letters, mo, natsorted, polars):
 def __(
     chosen_letter,
     mo,
+    polars,
     show_lemma_annotations,
     show_part_annotations,
     show_pos_annotations,
@@ -281,12 +282,15 @@ def __(
         
         _html = store.view(query, *_highlights)
         highlights_md = "".join(f"* ``{hq}``\n" for hq in _highlights)
+        for _letter in store.query(query):
+            letter_metadata = polars.DataFrame(((x.key().id(), str(x)) for x in _letter["letter"].data()), schema=["Key", "Value"],orient="row")
     else:
         _html = "(no letters selected)"
         query = "(no query provided)"
+        letter_metadata = polars.DataFrame()
         highlights_md = ""
     mo.Html(_html)
-    return highlights_md, query
+    return highlights_md, letter_metadata, query
 
 
 @app.cell
@@ -297,7 +301,15 @@ def __(highlights_md, mo, query):
         
         * ``{query}``
         {highlights_md}
-    """)
+
+        The table below shows all the metadata that was associated with this letter:   
+    """) 
+    return
+
+
+@app.cell
+def __(letter_metadata):
+    letter_metadata    
     return
 
 
