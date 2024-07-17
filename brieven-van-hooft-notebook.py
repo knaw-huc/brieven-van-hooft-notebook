@@ -44,10 +44,17 @@ def __(mo):
 
 
 @app.cell
-def __(mo):
+def __():
+    #these are the main imports
+    import marimo as mo
+    import polars
+    from natsort import natsorted
+    import stam
+
     import os.path
     from urllib.request import urlretrieve
 
+    #download the data
     if not os.path.exists("hoof001hwva02.txt"):
         urlretrieve("https://www.dbnl.org/nieuws/text.php?id=hoof001hwva02","hoof001hwva02.txt")
     if not os.path.exists("hoof001hwva03.txt"):
@@ -67,7 +74,7 @@ def __(mo):
 
     * Data download ready? {data_downloaded}
     """)
-    return data_downloaded, os, urlretrieve
+    return data_downloaded, mo, natsorted, os, polars, stam, urlretrieve
 
 
 @app.cell
@@ -128,13 +135,15 @@ def __(mo):
 
 @app.cell
 def __(mo, store):
+    # present a form to explore vocabularies
+
     available_datasets = [ x.id() for x in store.datasets() ]
     chosen_dataset = mo.ui.dropdown(options=sorted(available_datasets), value="brieven-van-hooft-metadata", label="Annotation Dataset:")
 
     mo.md(f"""
     ### Exploring vocabularies
 
-    You can choose an annotation dataset to explore possible keys and values therein: 
+    Explore keys and values in a vocabulary:
 
     * {chosen_dataset}
     """)
@@ -143,6 +152,8 @@ def __(mo, store):
 
 @app.cell
 def __(chosen_dataset, mo, store):
+    # present datakeys based on selected dataset
+
     dataset = store.dataset(chosen_dataset.value)
     available_keys = [x.id() for x in dataset.keys() ]
     chosen_key = mo.ui.dropdown(options=sorted(available_keys),label="Datakey:",value=available_keys[0])
@@ -154,45 +165,96 @@ def __(chosen_dataset, mo, store):
 
 
 @app.cell
-def __(chosen_key, dataset, natsorted, polars):
+def __(store):
+    # initialize some data we need later
+    dataset_metadata = store.dataset("brieven-van-hooft-metadata")
+    key_letter_id = dataset_metadata.key("letter_id")
+    return dataset_metadata, key_letter_id
+
+
+@app.cell
+def __(chosen_key, dataset, mo, natsorted, polars):
+    # show the data for the selected data key
     key = dataset.key(chosen_key.value)
     vocab_dataframe = polars.DataFrame(
         data=natsorted((str(x), x.annotations_len()) for x in key.data()),
         schema=["Value","Occurrences"],
         orient="row"
     )
-    vocab_dataframe
-    return key, vocab_dataframe
+    vocab_selection = mo.ui.table(vocab_dataframe, selection="multi")
+    vocab_selection
+    return key, vocab_dataframe, vocab_selection
 
 
 @app.cell
-def __(mo, natsorted, store):
-    dataset_metadata = store.dataset("brieven-van-hooft-metadata")
-    key_letter_id = dataset_metadata.key("letter_id")
+def __(
+    chosen_dataset,
+    chosen_key,
+    key_letter_id,
+    mo,
+    natsorted,
+    polars,
+    store,
+    vocab_selection,
+):
+    #Find letters given selected data
+
+    data_values = "|".join([f"\"{str(x[0])}\"" for x in vocab_selection.value.select(polars.selectors.first()).iter_rows()])
+    data_query = f"""SELECT ANNOTATION ?a WHERE DATA "{chosen_dataset.value}" "{chosen_key.value}" = {data_values};"""
+    matching_letters = []
+    for result in store.query(data_query):
+        if result["a"].test_data(key_letter_id):
+            matching_letters.append(next(result["a"].data(key_letter_id)))
+
+    if matching_letters:
+        matching_letters_md = "\n".join(natsorted(f"* ``{str(x)}``" for x in matching_letters))
+        _r = mo.md(f"""The following letters match your query (``{data_query}``): 
+
+    {matching_letters_md}
+    """)
+    elif data_query and data_values:
+        _r = mo.md(f"""There were no letters matching your query (``{data_query}``)""")
+    else:
+        _r = mo.md(f"""(no data query done)""")
+    _r        
+    return (
+        data_query,
+        data_values,
+        matching_letters,
+        matching_letters_md,
+        result,
+    )
+
+
+@app.cell
+def __(key_letter_id, mo, natsorted):
+    #this cell presents a form to view letters and annotations
+
     available_letters = natsorted(str(x) for x in key_letter_id.data())
     chosen_letter = mo.ui.dropdown(options=available_letters)
     show_pos_annotations = mo.ui.checkbox()
     show_lemma_annotations = mo.ui.checkbox()
     show_part_annotations = mo.ui.checkbox()
+    show_structure_annotations = mo.ui.checkbox()
 
 
     mo.md(f"""
-    ### Visualising Letters
+    ## Visualisation of Letters and Annotations
 
     * Select a letter to visualise: {chosen_letter}
     * Show part-of-speech annotations? {show_pos_annotations}
     * Show lemma annotations? {show_lemma_annotations}
     * Show part annotations? {show_part_annotations}
+    * Show structure annotations from FoLiA? {show_structure_annotations}
 
     """)
     return (
         available_letters,
         chosen_letter,
-        dataset_metadata,
-        key_letter_id,
         show_lemma_annotations,
         show_part_annotations,
         show_pos_annotations,
+        show_structure_annotations,
     )
 
 
@@ -203,9 +265,12 @@ def __(
     show_lemma_annotations,
     show_part_annotations,
     show_pos_annotations,
+    show_structure_annotations,
     store,
 ):
-    _query = f"""SELECT ANNOTATION ?letter WHERE DATA "brieven-van-hooft-metadata" "letter_id" = "{chosen_letter.value}";"""
+    #this cell forms and runs query for letter visualisation and display the results
+
+    query = f"""SELECT ANNOTATION ?letter WHERE DATA "brieven-van-hooft-metadata" "letter_id" = "{chosen_letter.value}";"""
     _highlights = []
     if show_pos_annotations.value:
         _highlights.append("""@VALUETAG SELECT ANNOTATION ?pos WHERE RELATION ?letter EMBEDS; DATA "gustave-pos" "class";""")
@@ -213,24 +278,57 @@ def __(
         _highlights.append("""@VALUETAG SELECT ANNOTATION ?lemma WHERE RELATION ?letter EMBEDS; DATA "gustave-lem" "class";""")
     if show_part_annotations.value:
         _highlights.append("""@VALUETAG SELECT ANNOTATION ?part WHERE RELATION ?letter EMBEDS; DATA "brieven-van-hooft-categories" "part";""")
-    _html = store.view(_query, *_highlights)
+    if show_structure_annotations.value:
+        _highlights.append("""@VALUETAG SELECT ANNOTATION ?w WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "w";""")
+        _highlights.append("""@VALUETAG SELECT ANNOTATION ?p WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "p";""")
+        _highlights.append("""@VALUETAG SELECT ANNOTATION ?s WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "s";""")    
+
+    _html = store.view(query, *_highlights)
+    highlights_md = "".join(f"* ``{hq}``\n" for hq in _highlights)
     mo.Html(_html)
+    return highlights_md, query
+
+
+@app.cell
+def __(highlights_md, mo, query):
+    mo.md(f"""
+
+        The following selection query and (optionally) highlight queries were used to render the above visualisation:
+        
+        * ``{query}``
+        {highlights_md}
+    """)
     return
 
 
 @app.cell
-def __():
-    #these are the main imports
-    import marimo as mo
-    import polars
-    from natsort import natsorted
-    import stam
-    return mo, natsorted, polars, stam
+def __(mo):
+    #this cell produces the custom query form
+
+    queryform = mo.ui.text_area(label="Enter a selection query and zero or more highlight queries, each separated by an empty line. Use STAMQL syntax:",full_width=True).form()
+
+    mo.md(f"""
+    ## Custom Queries
+
+    {queryform}
+    """)
+
+    return queryform,
 
 
 @app.cell
-def __():
-    return
+def __(mo, queryform, store):
+    #this cell runs the custom query and presents the results
+
+    if queryform.value:
+        custom_queries = [ x for x in queryform.value.split("\n\n") if x.strip() ]
+        _html = store.view(custom_queries[0], *custom_queries[1:])
+        if _html.find("<h2>") == -1:
+            _html = "(query did no produce any results)"
+    else:
+        _html = "(no query submitted)"
+    mo.Html(_html)
+    return custom_queries,
 
 
 if __name__ == "__main__":
