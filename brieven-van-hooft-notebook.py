@@ -297,7 +297,7 @@ def __(
         _html = store.view(query, *_highlights)
         highlights_md = "".join(f"* ``{hq}``\n" for hq in _highlights)
         for _letter in store.query(query):
-            letter_metadata = polars.DataFrame(((x.key().id(), str(x)) for x in _letter["letter"].data()), schema=["Key", "Value"],orient="row")
+            letter_metadata = polars.DataFrame(((x.dataset().id(), x.key().id(), str(x)) for x in _letter["letter"].data()), schema=["Dataset","Key", "Value"],orient="row")
             break
     else:
         _html = "(no letters selected)"
@@ -355,6 +355,17 @@ def __(mo, queryform, store):
         _html = "(no custom query submitted)"
     mo.Html(_html)
     return custom_queries,
+
+
+@app.cell
+def __(custom_queries, mo):
+    _custom_queries_md = "\n".join((f"* `{q}`" for q in custom_queries))
+    mo.md(f"""
+    The following custom selection query and (optionally) highlight queries were used to render the above visualisation:
+
+    {_custom_queries_md}
+    """)
+    return
 
 
 @app.cell
