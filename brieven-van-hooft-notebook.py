@@ -382,7 +382,7 @@ def __(mo):
 
         ```
         SELECT ANNOTATION ?letter WHERE
-            DATA "brieven-van-hooft-metadata" "dbnl_id";
+            DATA "http://www.w3.org/ns/anno/" "type" = "Letter";
             DATA "brieven-van-hooft-metadata" "birthyear" < 1600;
         ```
 
@@ -409,7 +409,7 @@ def __(mo):
 
         ```
         SELECT ANNOTATION ?letter WHERE
-            DATA "brieven-van-hooft-metadata" "dbnl_id";
+            DATA "http://www.w3.org/ns/anno/" "type" = "Letter";
         {
           SELECT ANNOTATION ?w WHERE
             RELATION ?letter EMBEDS;
@@ -427,7 +427,7 @@ def __(mo):
 
         ```
         SELECT ANNOTATION ?letter WHERE
-            DATA "brieven-van-hooft-metadata" "dbnl_id";
+            DATA "http://www.w3.org/ns/anno/" "type" = "Letter";
         {
           SELECT TEXT ?w WHERE
             RELATION ?letter EMBEDS;
