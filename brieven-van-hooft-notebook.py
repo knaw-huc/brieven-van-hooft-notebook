@@ -418,9 +418,34 @@ def __(mo):
         }
         ```
 
+        ### Search for part of speech tags with a specific text
+
+        ```
+        SELECT ANNOTATION ?letter WHERE
+            DATA "http://www.w3.org/ns/anno/" "type" = "Letter";
+        {
+          SELECT ANNOTATION ?match WHERE
+            RELATION ?letter EMBEDS;
+            DATA "gustave-pos" "head" = "WW";
+            TEXT "vlieghen";
+        }
+        ```
+
+        ### Search for words with one of multiple lemmas
+
+        ```
+        SELECT ANNOTATION ?letter WHERE
+            DATA "http://www.w3.org/ns/anno/" "type" = "Letter";
+        {
+          SELECT ANNOTATION ?match WHERE
+            RELATION ?letter EMBEDS;
+            DATA "gustave-lem" "class" = "vreemd|raar|merkwaardig";
+        }
+        ```
+
         ### Search for words with a specific text and part-of-Speech tag
 
-        In letters, search for words with a specific text that also have a specific PoS tag:
+        This is a more complex example that explicitly searches letters for words that have a particular PoS tag:
 
         ```
         SELECT ANNOTATION ?letter WHERE
@@ -451,8 +476,37 @@ def __(mo):
             DATA "gustave-pos" "head" = "N";      
         }
         ```
+
+        ### Search for a particular sequence of PoS tags
+
+        This finds combinations of: ADJ + VZ + LID 
+
+        ```
+        SELECT ANNOTATION ?letter WHERE
+            DATA "http://www.w3.org/ns/anno/" "type" = "Letter";
+        {
+          SELECT ANNOTATION ?adj WHERE
+            RELATION ?letter EMBEDS;
+            DATA "gustave-pos" "head" = "ADJ";
+         {
+            SELECT ANNOTATION ?vz WHERE
+                 RELATION ?adj PRECEDES;
+                 DATA "gustave-pos" "head" = "VZ";
+           {
+            SELECT ANNOTATION ?lid WHERE
+                 RELATION ?vz PRECEDES;
+                 DATA "gustave-pos" "head" = "LID";
+           }
+         }
+        }
+        ```
         """
     )
+    return
+
+
+@app.cell
+def __():
     return
 
 
