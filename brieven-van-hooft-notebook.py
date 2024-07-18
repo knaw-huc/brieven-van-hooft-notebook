@@ -352,6 +352,7 @@ def __(mo, queryform, store):
         if _html.find("<h2>") == -1:
             _html = "(custom query did no produce any results)"
     else:
+        custom_queries = []
         _html = "(no custom query submitted)"
     mo.Html(_html)
     return custom_queries,
@@ -402,6 +403,20 @@ def __(mo):
 
         ```
 
+        ### Search for words with a specific text
+
+        In letters, search for words with a specific text:
+
+        ```
+        SELECT ANNOTATION ?letter WHERE
+            DATA "http://www.w3.org/ns/anno/" "type" = "Letter";
+        {
+          SELECT ANNOTATION ?match WHERE
+            RELATION ?letter EMBEDS;
+            DATA "https://w3id.org/folia/v2/" "elementtype" = "w";
+            TEXT "Blaricom";
+        }
+        ```
 
         ### Search for words with a specific text and part-of-Speech tag
 
