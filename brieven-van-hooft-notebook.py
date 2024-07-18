@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.7.5"
+__generated_with = "0.7.7"
 app = marimo.App(width="medium", app_title="Brieven van Hooft - Notebook")
 
 
@@ -34,6 +34,8 @@ def __(mo):
         The annotations were initially published in a combination of FoLiA XML and
         other stand-off formats. In 2024, they have been re-aligned with the original
         DBNL sources and published as a [STAM](https://annotation.github.io/stam) model.
+        You can also inspect the full [pipeline that produced this
+        model](https://github.com/knaw-huc/brieven-van-hooft-pipeline).
 
         This notebook provides search and visualisation functionality on this STAM
         model. We will guide you through several examples. All code in this notebook
@@ -144,7 +146,7 @@ def __(mo, store):
     mo.md(f"""
     ### Exploring vocabularies
 
-    Yuo can explore the keys and values in a vocabulary. If you select any values here, they will be used to constrain the letters shown in the next section.
+    You can explore the keys and values in a vocabulary. If you select any values here, they will be used to constrain the letters shown in the next section.
 
     * {chosen_dataset}
     """)
@@ -237,7 +239,7 @@ def __(key_dbnl_id, matching_letters, mo, natsorted, polars):
             orient="row"
         )
         letter_note = ""
-    chosen_letter = mo.ui.table(available_letters,selection="single")
+    chosen_letters = mo.ui.table(available_letters,selection="multi")
     show_pos_annotations = mo.ui.checkbox()
     show_lemma_annotations = mo.ui.checkbox()
     show_part_annotations = mo.ui.checkbox()
@@ -247,7 +249,7 @@ def __(key_dbnl_id, matching_letters, mo, natsorted, polars):
     mo.md(f"""
     ## Visualisation of Letters and Annotations
 
-    * Select a letter to visualise: {letter_note} {chosen_letter}
+    * Select one or more letters to visualise: {letter_note} {chosen_letters}
     * Show part-of-speech annotations? {show_pos_annotations}
     * Show lemma annotations? {show_lemma_annotations}
     * Show part annotations? {show_part_annotations}
@@ -256,7 +258,7 @@ def __(key_dbnl_id, matching_letters, mo, natsorted, polars):
     """)
     return (
         available_letters,
-        chosen_letter,
+        chosen_letters,
         letter_note,
         show_lemma_annotations,
         show_part_annotations,
@@ -267,7 +269,7 @@ def __(key_dbnl_id, matching_letters, mo, natsorted, polars):
 
 @app.cell
 def __(
-    chosen_letter,
+    chosen_letters,
     mo,
     polars,
     show_lemma_annotations,
@@ -277,9 +279,9 @@ def __(
     store,
 ):
     #this cell forms and runs query for letter visualisation and display the results
-    if not chosen_letter.value.is_empty():
-        _chosen_letter = chosen_letter.value.to_series()[0]
-        query = f"""SELECT ANNOTATION ?letter WHERE DATA "brieven-van-hooft-metadata" "dbnl_id" = "{_chosen_letter}";"""
+    if not chosen_letters.value.is_empty():
+        _chosen_letters = "|".join(chosen_letters.value.to_series())
+        query = f"""SELECT ANNOTATION ?letter WHERE DATA "brieven-van-hooft-metadata" "dbnl_id" = "{_chosen_letters}";"""
         _highlights = []
         if show_pos_annotations.value:
             _highlights.append("""@VALUETAG SELECT ANNOTATION ?pos WHERE RELATION ?letter EMBEDS; DATA "gustave-pos" "class";""")
@@ -296,6 +298,7 @@ def __(
         highlights_md = "".join(f"* ``{hq}``\n" for hq in _highlights)
         for _letter in store.query(query):
             letter_metadata = polars.DataFrame(((x.key().id(), str(x)) for x in _letter["letter"].data()), schema=["Key", "Value"],orient="row")
+            break
     else:
         _html = "(no letters selected)"
         query = "(no query provided)"
@@ -314,7 +317,7 @@ def __(highlights_md, mo, query):
         * ``{query}``
         {highlights_md}
 
-        The table below shows all the metadata that was associated with this letter:   
+        The table below shows all the metadata that was associated with the first selected letter:   
     """)
     return
 
