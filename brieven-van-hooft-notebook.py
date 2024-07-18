@@ -44,6 +44,17 @@ def __(mo):
 
 
 @app.cell
+def __(mo):
+    mo.md(f"""### Obtaining the data
+
+    We first obtain the data by downloading the original texts of the three books
+    from DBNL, and by downloading the STAM model from Zenodo. Then will will load the data into memory. All this may take a
+    while. Please wait until both these tasks are marked as done below:
+    """)
+    return
+
+
+@app.cell
 def __():
     #these are the main imports
     import marimo as mo
@@ -66,14 +77,7 @@ def __():
         urlretrieve("https://download.anaproy.nl/hoof001hwva.output.store.stam.json","hoof001hwva.output.store.stam.json")
     data_downloaded = "✅"
 
-    mo.md(f"""### Obtaining the data
-
-    We first obtain the data by downloading the original texts of the three books
-    from DBNL, and by downloading the STAM model from Zenodo. The latter may take a
-    while, please wait until it reports being done:
-
-    * Data download ready? {data_downloaded}
-    """)
+    mo.md(f"* Data download ready? {data_downloaded}")
     return data_downloaded, mo, natsorted, os, polars, stam, urlretrieve
 
 
@@ -84,10 +88,7 @@ def __(data_downloaded, mo, stam):
         store = stam.AnnotationStore(file="hoof001hwva.output.store.stam.json")
         data_loaded = "✅"
 
-    mo.md(f"""
-    Next we load the data into memory, this too may take a while:
-
-    * Data loaded? {data_loaded}""")
+    mo.md(f"* Data loaded? {data_loaded}")
     return data_loaded, store
 
 
@@ -110,12 +111,12 @@ def __(mo):
         | Set | Key	| Explanation |
         | --- | --- | ----------- |
         | `https://w3id.org/folia/v2/` | `elementtype` | Indicates the type of FoLiA element of this annotation (e.g. `s` (sentence), `w`(word), `pos`, `lemma`) | 
-        | `gustave-pos` | `class` | The Part-of-Speech tag, manually assigned by the annotator, according to the CGN tagset and an extension thereof |
+        | `gustave-pos` | `class` | The Part-of-Speech tag, manually assigned by the annotator, according to the CGN tagset and an extension thereof. This contains the full tag along with all its features. If you only want the tag head, use key `head` instead. If you want a specific feature use the key pertaining to the feature (e.g. `gender` or `number`) |
         | `gustave-lemma` |	`class` | The lemma, manually assigned by the annotator |
         | `http://ilk.uvt.nl/folia/sets/frog-mbpos-cgn`	| `class` | The Part-of-Speech tag, automatically annotated by Frog, according to the CGN tagset |
         | `http://ilk.uvt.nl/folia/sets/frog-mblem-nl` | `class` | The lemma, automatically annotated by Frog |
         | `https://w3id.org/folia/v2/` | `confidence` | The confidence value that was assigned to the annotation (a value between 0 and 1, occurs with automatic annotations by Frog) | 
-        | `brieven-van-hooft-metadata` |  `dbnl_id` | The full letter identifier as assigned by the DBNL. You will find this key and others in this set on annotations of letters as a whole. |
+        | `brieven-van-hooft-metadata` |  `dbnl_id` | The full letter identifier as assigned by the DBNL. It is the primary means of identifying a particular letter. You will find this key and others in this set on annotations of letters as a whole. |
         | `brieven-van-hooft-metadata` |  `dated` | The date of a letter |
         | `brieven-van-hooft-metadata` |  `recipient` | The name of the recipient of a letter |
         | `brieven-van-hooft-metadata` |  `letter_id` | The letter sequence number (not necessarily entirely numerical) |
@@ -399,7 +400,7 @@ def __(mo):
           SELECT ANNOTATION ?w WHERE
             RELATION ?letter EMBEDS;
             DATA "https://w3id.org/folia/v2/" "elementtype" = "w";
-            TEXT " Naerden";
+            TEXT "Naerden";
           {
             SELECT ANNOTATION ?pos WHERE
                 RELATION ?w EQUALS;
@@ -416,7 +417,7 @@ def __(mo):
         {
           SELECT TEXT ?w WHERE
             RELATION ?letter EMBEDS;
-            TEXT " Naerden";
+            TEXT "Naerden";
             DATA "https://w3id.org/folia/v2/" "elementtype" = "w";
             DATA "gustave-pos" "head" = "N";      
         }
