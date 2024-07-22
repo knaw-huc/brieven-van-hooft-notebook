@@ -84,8 +84,31 @@ def __():
 
 
 @app.cell
-def __(data_downloaded, mo, stam):
-    if data_downloaded:
+def __(mo):
+    import hashlib
+
+    checksums = {
+        "hoof001hwva02.txt":"5f0df29a5ea14e87bc66c3a8e8012ec966a8a948b709cc80504c6fb5c2e9d82b",
+        "hoof001hwva03.txt":"4c0a23a238b6da382c6a0c5334a867d8e3ef4cb081aae37c5104cf612cbeb64a",
+        "hoof001hwva04.txt":"6a2f9c4454f0db71a84c774418edaa9adc4ee19a5b3da00f051dd8c6b2f691df"
+    }
+    data_integrity = "✅"
+    _msg = ""
+    for filename, checksum in checksums.items():
+        m = hashlib.sha256()
+        with open(filename,'rb') as f:
+            m.update(f.read())
+        if m.hexdigest() != checksum:
+            data_integrity = "❌"
+            msg = f"\n* Checksum for {filename} failed! This means that the plain text data for Brieven van Hooft at DBNL has changed and that either you need to obtain the older files, or the annotation pipeline needs to be rerun! (contact hennie.brugman@di.huc.knaw.nl and proycon@anaproy.nl)"
+
+    mo.md(f"* Data integrity check? {data_integrity} {_msg}")
+    return checksum, checksums, data_integrity, f, filename, hashlib, m, msg
+
+
+@app.cell
+def __(data_downloaded, data_integrity, mo, stam):
+    if data_downloaded and data_integrity == "✅":
         #load the STAM model (AnnotationStore) into the variable `store`
         store = stam.AnnotationStore(file="hoof001hwva.output.store.stam.json")
         data_loaded = "✅"
