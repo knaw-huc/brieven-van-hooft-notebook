@@ -315,10 +315,11 @@ def __(
         if show_structure_annotations.value:
             _highlights.append("""@VALUETAG SELECT ANNOTATION ?w WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "w";""")
             _highlights.append("""@VALUETAG SELECT ANNOTATION ?p WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "p";""")
-            _highlights.append("""@VALUETAG SELECT ANNOTATION ?s WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "s";""")    
+            _highlights.append("""@VALUETAG SELECT ANNOTATION ?s WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "s";""")   
+        if _highlights:
+            query += " { " + " | ".join(_highlights) + " }"
 
-        _html = store.view(query, *_highlights)
-        highlights_md = "".join(f"* ``{hq}``\n" for hq in _highlights)
+        _html = store.view(query)
         for _letter in store.query(query):
             letter_metadata = polars.DataFrame(((x.dataset().id(), x.key().id(), str(x)) for x in _letter["letter"].data()), schema=["Dataset","Key", "Value"],orient="row")
             break
@@ -332,13 +333,12 @@ def __(
 
 
 @app.cell
-def __(highlights_md, mo, query):
+def __(mo, query):
     mo.md(f"""
 
-        The following selection query and (optionally) highlight queries were used to render the above visualisation:
+        The following query was used to render the above visualisation:
 
         * ``{query}``
-        {highlights_md}
 
         The table below shows all the metadata that was associated with the first selected letter:   
     """)
@@ -355,7 +355,7 @@ def __(letter_metadata):
 def __(mo):
     #this cell produces the custom query form
 
-    queryform = mo.ui.text_area(label="Enter a selection query and zero or more highlight queries, each separated by an empty line. Use STAMQL syntax:",full_width=True, rows=25).form()
+    queryform = mo.ui.text_area(label="Enter a query. Subqueries can be used to specify highlights. Use STAMQL syntax:",full_width=True, rows=25).form()
 
     mo.md(f"""
     ## Custom Queries
@@ -370,25 +370,12 @@ def __(mo, queryform, store):
     #this cell runs the custom query and presents the results
 
     if queryform.value:
-        custom_queries = [ x for x in queryform.value.split("\n\n") if x.strip() ]
-        _html = store.view(custom_queries[0], *custom_queries[1:])
+        _html = store.view(queryform.value)
         if _html.find("<h2>") == -1:
             _html = "(custom query did no produce any results)"
     else:
-        custom_queries = []
         _html = "(no custom query submitted)"
     mo.Html(_html)
-    return custom_queries,
-
-
-@app.cell
-def __(custom_queries, mo):
-    _custom_queries_md = "\n".join((f"* `{q}`" for q in custom_queries))
-    mo.md(f"""
-    The following custom selection query and (optionally) highlight queries were used to render the above visualisation:
-
-    {_custom_queries_md}
-    """)
     return
 
 
@@ -414,16 +401,17 @@ def __(mo):
 
         ```
         SELECT ANNOTATION ?letter WHERE
-            DATA "brieven-van-hooft-metadata" "dbnl_id" = "hoof001hwva02_01_0032";
-
-        SELECT ANNOTATION ?adj WHERE
-            RELATION ?letter EMBEDS;
-            DATA "gustave-pos" "head" = "ADJ";
-
-        SELECT ANNOTATION ?adv WHERE
-            RELATION ?letter EMBEDS;
-            DATA "gustave-pos" "head" = "BIJW";   
-
+            DATA "brieven-van-hooft-metadata" "dbnl_id" = "hoof001hwva02_01_0032"; 
+            {
+            SELECT ANNOTATION ?adj WHERE
+                RELATION ?letter EMBEDS;
+                DATA "gustave-pos" "head" = "ADJ"; 
+                {
+                SELECT ANNOTATION ?adv WHERE
+                    RELATION ?letter EMBEDS;
+                    DATA "gustave-pos" "head" = "BIJW";
+                }
+            }
         ```
 
         ### Search for words with a specific text
@@ -433,12 +421,12 @@ def __(mo):
         ```
         SELECT ANNOTATION ?letter WHERE
             DATA "http://www.w3.org/ns/anno/" "type" = "Letter";
-        {
-          SELECT ANNOTATION ?match WHERE
-            RELATION ?letter EMBEDS;
-            DATA "https://w3id.org/folia/v2/" "elementtype" = "w";
-            TEXT "Blaricom";
-        }
+            {
+            SELECT ANNOTATION ?match WHERE
+                RELATION ?letter EMBEDS;
+                DATA "https://w3id.org/folia/v2/" "elementtype" = "w";
+                TEXT "Blaricom";
+            }
         ```
 
         ### Search for part of speech tags with a specific text
@@ -446,12 +434,12 @@ def __(mo):
         ```
         SELECT ANNOTATION ?letter WHERE
             DATA "http://www.w3.org/ns/anno/" "type" = "Letter";
-        {
-          SELECT ANNOTATION ?match WHERE
-            RELATION ?letter EMBEDS;
-            DATA "gustave-pos" "head" = "WW";
-            TEXT "vlieghen";
-        }
+            {
+            SELECT ANNOTATION ?match WHERE
+                RELATION ?letter EMBEDS;
+                DATA "gustave-pos" "head" = "WW";
+                TEXT "vlieghen";
+            }
         ```
 
         ### Search for words with one of multiple lemmas
@@ -459,11 +447,11 @@ def __(mo):
         ```
         SELECT ANNOTATION ?letter WHERE
             DATA "http://www.w3.org/ns/anno/" "type" = "Letter";
-        {
-          SELECT ANNOTATION ?match WHERE
-            RELATION ?letter EMBEDS;
-            DATA "gustave-lem" "class" = "vreemd|raar|merkwaardig";
-        }
+            {
+              SELECT ANNOTATION ?match WHERE
+                RELATION ?letter EMBEDS;
+                DATA "gustave-lem" "class" = "vreemd|raar|merkwaardig";
+            }
         ```
 
         ### Search for words with a specific text and part-of-Speech tag
