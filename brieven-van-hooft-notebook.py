@@ -307,15 +307,15 @@ def __(
         query = f"""SELECT ANNOTATION ?letter WHERE DATA "brieven-van-hooft-metadata" "dbnl_id" = "{_chosen_letters}";"""
         _highlights = []
         if show_pos_annotations.value:
-            _highlights.append("""@VALUETAG SELECT ANNOTATION ?pos WHERE RELATION ?letter EMBEDS; DATA "gustave-pos" "class";""")
+            _highlights.append("""@VALUETAG SELECT OPTIONAL ANNOTATION ?pos WHERE RELATION ?letter EMBEDS; DATA "gustave-pos" "class";""")
         if show_lemma_annotations.value:
-            _highlights.append("""@VALUETAG SELECT ANNOTATION ?lemma WHERE RELATION ?letter EMBEDS; DATA "gustave-lem" "class";""")
+            _highlights.append("""@VALUETAG SELECT OPTIONAL ANNOTATION ?lemma WHERE RELATION ?letter EMBEDS; DATA "gustave-lem" "class";""")
         if show_part_annotations.value:
-            _highlights.append("""@VALUETAG SELECT ANNOTATION ?part WHERE RELATION ?letter EMBEDS; DATA "brieven-van-hooft-categories" "part";""")
+            _highlights.append("""@VALUETAG SELECT OPTIONAL ANNOTATION ?part WHERE RELATION ?letter EMBEDS; DATA "brieven-van-hooft-categories" "part";""")
         if show_structure_annotations.value:
-            _highlights.append("""@VALUETAG SELECT ANNOTATION ?w WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "w";""")
-            _highlights.append("""@VALUETAG SELECT ANNOTATION ?p WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "p";""")
-            _highlights.append("""@VALUETAG SELECT ANNOTATION ?s WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "s";""")   
+            _highlights.append("""@VALUETAG SELECT OPTIONAL ANNOTATION ?w WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "w";""")
+            _highlights.append("""@VALUETAG SELECT OPTIONAL ANNOTATION ?p WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "p";""")
+            _highlights.append("""@VALUETAG SELECT OPTIONAL ANNOTATION ?s WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "s";""")   
         if _highlights:
             query += " { " + " | ".join(_highlights) + " }"
 
