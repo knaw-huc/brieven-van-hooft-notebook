@@ -268,7 +268,6 @@ def __(key_dbnl_id, matching_letters, mo, natsorted, polars):
     show_part_annotations = mo.ui.checkbox()
     show_structure_annotations = mo.ui.checkbox()
 
-
     mo.md(f"""
     ## Visualisation of Letters and Annotations
 
@@ -318,6 +317,7 @@ def __(
             _highlights.append("""@VALUETAG SELECT OPTIONAL ANNOTATION ?s WHERE RELATION ?letter EMBEDS; DATA "https://w3id.org/folia/v2/" "elementtype" = "s";""")   
         if _highlights:
             query += " { " + " | ".join(_highlights) + " }"
+        print(query)
 
         _html = store.view(query)
         for _letter in store.query(query):
@@ -409,7 +409,7 @@ def __(mo):
                 {
                 SELECT ANNOTATION ?adv WHERE
                     RELATION ?letter EMBEDS;
-                    DATA "gustave-pos" "head" = "BIJW";
+                    DATA "gustave-pos" "head" = "BW";
                 }
             }
         ```
@@ -474,7 +474,7 @@ def __(mo):
         }
         ```
 
-        Alternative (TODO: DEBUG!):
+        Simpler alternative:
 
         ```
         SELECT ANNOTATION ?letter WHERE
