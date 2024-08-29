@@ -13,7 +13,7 @@ def __(mo):
         ## Introduction
 
         This notebook provides access to the linguistic and socio-linguistic
-        annotations that were added to the letters by P.C van Hooft in an annotation
+        annotations that were added to the P.C van Hooft letters in an annotation
         project in 2017 by Marjo van Koppen and Marijn Schraagen.
 
         The letters come from *"De briefwisseling van Pieter Corneliszoon Hooft, edited
@@ -38,8 +38,7 @@ def __(mo):
         model](https://github.com/knaw-huc/brieven-van-hooft-pipeline).
 
         This notebook provides search and visualisation functionality on this STAM
-        model. We will guide you through several examples. All code in this notebook
-        can be executed, and if needed, modified to your liking.
+        model. We will guide you through several examples. 
         """
     )
     return
@@ -355,7 +354,7 @@ def __(letter_metadata):
 def __(mo):
     #this cell produces the custom query form
 
-    queryform = mo.ui.text_area(label="Enter a query. Subqueries can be used to specify highlights. Use STAMQL syntax:",full_width=True, rows=25).form()
+    queryform = mo.ui.text_area(label="Enter a query. Subqueries can be used to specify highlights. Use [STAMQL syntax](https://github.com/annotation/stam/tree/master/extensions/stam-query):",full_width=True, rows=25).form()
 
     mo.md(f"""
     ## Custom Queries
@@ -385,7 +384,8 @@ def __(mo):
         r"""
         ## Custom Query Examples
 
-        You can copy these example queries to the custom query input and run them:
+        You can copy these STAMQL example queries to the custom query input and
+        run them. You can also consult [a formal specification of the query language](https://github.com/annotation/stam/tree/master/extensions/stam-query).
 
         ### Metadata search
 
