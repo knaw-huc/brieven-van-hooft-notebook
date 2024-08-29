@@ -34,7 +34,9 @@ liking.
 ### Using Docker
 
 1. In a terminal run: `docker pull proycon/brieven-van-hooft-notebook`
+    * Alternatively, if you don't want to use the command line, you can install [Docker Desktop](https://www.docker.com/products/docker-desktop/) and search for `proycon/brieven-van-hooft-notebook`.
 2. Then run: `docker run -p 8080:8080 proycon/brieven-van-hooft-notebook`
+    * (Or start it from Docker Desktop)
 3. Point your browser to `http://localhost:8080`, initial loading may take a while
 
 Note that the notebook runs locally on your system in a container, only the
