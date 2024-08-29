@@ -39,6 +39,10 @@ def __(mo):
 
         This notebook provides search and visualisation functionality on this STAM
         model. We will guide you through several examples. 
+
+        Note that the letters are shown exactly according to the plain text data
+        from DBNL. Conversion from TEI XML to plain text was done by DBNL and may
+        contain some conversion artefacts.
         """
     )
     return
@@ -384,8 +388,11 @@ def __(mo):
         r"""
         ## Custom Query Examples
 
-        You can copy these STAMQL example queries to the custom query input and
-        run them. You can also consult [a formal specification of the query language](https://github.com/annotation/stam/tree/master/extensions/stam-query).
+        Below are various example queries in STAMQL.
+        You can copy any these to the custom query input and
+        run them. They serve as examples which you can adapt to your own search needs.
+
+        [A formal specification of the query language](https://github.com/annotation/stam/tree/master/extensions/stam-query) is available for in-depth documentation.
 
         ### Metadata search
 
