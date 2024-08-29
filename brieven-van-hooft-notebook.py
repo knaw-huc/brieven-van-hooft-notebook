@@ -50,7 +50,7 @@ def __(mo):
 
     We first obtain the data by downloading the original texts of the three books
     from DBNL, and by downloading the STAM model from Zenodo. Then we will load the data into memory. All this may take a
-    while. Please wait until both these tasks are marked as done below:
+    while. Please wait until these tasks are marked as done below:
     """)
     return
 
