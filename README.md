@@ -16,7 +16,7 @@ License information for these works can be found
 We did not receive the rights to publish the editorial parts of the texts that
 are not from the 17th century. They will still be available in this notebook as
 they can be downloaded from DBNL directly, but republishing them is not
-permitted unfortunately. 
+permitted unfortunately. The notebook's code itself is under the GNU General Public License v3.
 
 The annotations were initially published in a combination of FoLiA XML and
 other stand-off formats. In 2024, they have been re-aligned with the original
