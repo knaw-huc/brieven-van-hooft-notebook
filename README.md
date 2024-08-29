@@ -31,6 +31,21 @@ liking.
 
 ## Installation & Usage
 
+### Using Docker
+
+1. In a terminal run: `docker pull proycon/brieven-van-hooft-notebook`
+2. Then run: `docker run -p 8080:8080 proycon/brieven-van-hooft-notebook`
+3. Point your browser to `http://localhost:8080`, initial loading may take a while
+
+Note that the notebook runs locally on your system in a container, only the
+models and texts will be automatically downloaded once on first run. This may
+take a while.
+
+Steps 2 and 3 need to be repeated whenever you want to open the notebook again.
+The rest only needs to be done once.
+
+### Local installation
+
 Make sure you have an up-to-date Python installation on your system then, from
 the command line, do:
 
