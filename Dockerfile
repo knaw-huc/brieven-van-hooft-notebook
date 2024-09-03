@@ -5,7 +5,7 @@ WORKDIR /usr/src
 COPY requirements.txt .
 COPY brieven-van-hooft-notebook.py .
 
-RUN pip install --break-system-packages -r requirements.txt
+RUN pip install --break-system-packages stam marimo polars-lts-cpu natsort
 EXPOSE 8080
 
 ENV MARIMO_OUTPUT_MAX_BYTES=40_000_000
