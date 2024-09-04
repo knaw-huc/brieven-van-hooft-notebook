@@ -68,3 +68,12 @@ first run. This may take a while.
 
 Steps 3 and 5 need to be repeated whenever you want to open the notebook again.
 The rest only needs to be done once.
+
+### Troubleshooting
+
+* Downloading and loading the data may take a while! You will see an hourglass symbol in the top-left corner.
+* If you visualise a lot of letters or an entire edition, you may run into an error `Your output is too large`.
+  You can set a higher output limit as follows:
+    * If you use docker, pass `--env MARIMO_OUTPUT_MAX_BYTES=80_000_000` (80MB, the default is 40) when doing `docker run`.
+    * If you use a local installation, do `export MARIMO_OUTPUT_MAX_BYTES=80_000_000` *prior* to `marimo run`.
+
