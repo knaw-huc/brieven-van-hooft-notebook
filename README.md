@@ -53,8 +53,9 @@ the command line, do:
 
 1. Clone this git repository: `git clone https://github.com/knaw-huc/brieven-van-hooft-notebook`
 2. Make a virtual environment: `python3 -m venv env`
-3. Activate the virtual environment: `source env/bin/activate` (on UNIX systems), on Windows PowerShell do `env\bin\Activate.ps1` instead).
+3. Activate the virtual environment: `source env/bin/activate` (on UNIX systems), on Windows PowerShell do `env\scripts\Activate.ps1` instead).
 4. Install all dependencies: `python3 -m pip install -r requirements.txt`. 
+    * On Windows this may give a warning that you need to add a path to your `PATH` this can be done with something like `$env:PATH += ";C:\Users\yourusername\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\Scripts` (copy the actual path from the warning).
 5. Run the notebook: `marimo run brieven-van-hooft-notebook.py`
 
 The notebook will open in your default web-browser and automatically run. Note
