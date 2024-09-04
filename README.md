@@ -48,8 +48,12 @@ The rest only needs to be done once.
 
 ### Local installation
 
-Make sure you have an up-to-date Python installation on your system then, from
-the command line, do:
+First make sure you have an up-to-date Python installation on your system.
+Windows users can [https://www.python.org/downloads/windows/](obtain Python
+from the official website), make sure to select the option *Add to PATH* during
+installation.
+
+Then from the command line, do:
 
 1. Clone this git repository: `git clone https://github.com/knaw-huc/brieven-van-hooft-notebook`
 2. Make a virtual environment: `python3 -m venv env`
