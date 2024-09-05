@@ -172,7 +172,7 @@ def __(mo, store):
     mo.md(f"""
     ### Exploring vocabularies
 
-    You can explore the keys and values in a vocabulary. If you select any values here, they will be used to constrain the letters shown in the next section.
+    You can explore the keys and values in a vocabulary. If you select any values in the table below, they will be used to constrain the letters shown in the next section.
 
     * {chosen_dataset}
     """)
@@ -241,8 +241,10 @@ def __(
 
     if matching_letters:
         _md = mo.md(f"{len(matching_letters)} matching letters were found (query was: ``{data_query}``), the selection below is constrained accordingly:" )
-    else:
+    elif data_values:
         _md = mo.md(f"No matching letters found (query was ``{data_query}``)")
+    else:
+        _md = mo.md(f"No constraints provided, select one or more in the above table if you want to constraint the letters shown in the next section")
     _md
     return data_query, data_values, matching_letters
 
