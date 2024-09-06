@@ -43,21 +43,15 @@ def __(mo):
         Note that the letters are shown exactly according to the plain text data
         from DBNL. Conversion from TEI XML to plain text was done by DBNL and may
         contain some conversion artefacts.
+
+        ### Obtaining the data
+
+        We first obtain the data by downloading the original texts of the three books
+        from DBNL, and by downloading the STAM model from Zenodo. Then we will load the data into memory. All this may take a
+        while. Please wait until three checkmarks appear below to indicate this has been done:
         """
     )
     return
-
-
-@app.cell
-def __(mo):
-    mo.md(f"""### Obtaining the data
-
-    We first obtain the data by downloading the original texts of the three books
-    from DBNL, and by downloading the STAM model from Zenodo. Then we will load the data into memory. All this may take a
-    while. Please wait until these tasks are marked as done below:
-    """)
-    return
-
 
 @app.cell
 def __():
@@ -71,7 +65,13 @@ def __():
     import os.path
     from urllib.request import urlretrieve
 
-    #download the data
+    return mo, natsorted, os, polars, stam, urlretrieve
+
+@app.cell
+def __(mo, natsorted, os, polars, stam, urlretrieve):
+    import hashlib
+
+    #download and load the data
     if not os.path.exists("hoof001hwva02.txt"):
         urlretrieve("https://www.dbnl.org/nieuws/text.php?id=hoof001hwva02","hoof001hwva02.txt")
     if not os.path.exists("hoof001hwva03.txt"):
@@ -82,55 +82,44 @@ def __():
         #TODO: adapt link to Zenodo before final publication
         urlretrieve("https://download.anaproy.nl/hoof001hwva.output.store.stam.json","hoof001hwva.output.store.stam.json")
     os.sync()
-    data_downloaded = "✅"
+    _data_downloaded = "✅"
 
-    mo.md(f"* Data download ready? {data_downloaded}")
-    return data_downloaded, mo, natsorted, os, polars, stam, urlretrieve
-
-
-@app.cell
-def __(data_downloaded, mo):
-    import hashlib
-
-    if data_downloaded == "✅":
-        checksums = {
-            "hoof001hwva02.txt":"5f0df29a5ea14e87bc66c3a8e8012ec966a8a948b709cc80504c6fb5c2e9d82b",
-            "hoof001hwva03.txt":"4c0a23a238b6da382c6a0c5334a867d8e3ef4cb081aae37c5104cf612cbeb64a",
-            "hoof001hwva04.txt":"6a2f9c4454f0db71a84c774418edaa9adc4ee19a5b3da00f051dd8c6b2f691df",
-            "hoof001hwva.output.store.stam.json": "f56baccb3dc8ca88d1f6327f806c173a954391e42c5236e76cc5a9284e7521ec"
-        }
-        data_integrity = "✅"
-        _msg = ""
-        for filename, checksum in checksums.items():
-            m = hashlib.sha256()
-            with open(filename,'rb') as f:
-                m.update(f.read())
-            if m.hexdigest() != checksum:
-                data_integrity = "❌"
-                if filename.endswith(".txt"): 
-                    msg = f"\n* Checksum for {filename} failed! This means that the plain text data for Brieven van Hooft at DBNL has changed and that either you need to obtain the older files, or the annotation pipeline needs to be rerun! (contact hennie.brugman@di.huc.knaw.nl and proycon@anaproy.nl)"
-                elif filename.endswith(".json"): 
-                    msg = f"\n* Checksum for {filename} failed! This means that STAM model for Brieven van Hooft has changed and the notebook needs to adapt to the new version (contact hennie.brugman@di.huc.knaw.nl and proycon@anaproy.nl)"
-        
-    mo.md(f"* Data integrity check? {data_integrity} {_msg}")
-    return checksum, checksums, data_integrity, f, filename, hashlib, m, msg
-
-
-@app.cell
-def __(data_downloaded, data_integrity, mo, stam):
-    if data_downloaded and data_integrity == "✅":
+    _checksums = {
+        "hoof001hwva02.txt":"5f0df29a5ea14e87bc66c3a8e8012ec966a8a948b709cc80504c6fb5c2e9d82b",
+        "hoof001hwva03.txt":"4c0a23a238b6da382c6a0c5334a867d8e3ef4cb081aae37c5104cf612cbeb64a",
+        "hoof001hwva04.txt":"6a2f9c4454f0db71a84c774418edaa9adc4ee19a5b3da00f051dd8c6b2f691df",
+        "hoof001hwva.output.store.stam.json": "f56baccb3dc8ca88d1f6327f806c173a954391e42c5236e76cc5a9284e7521ec"
+    }
+    _data_integrity = "✅"
+    _msg = ""
+    for _filename, _checksum in _checksums.items():
+        _m = hashlib.sha256()
+        with open(_filename,'rb') as _f:
+            _m.update(_f.read())
+        if _m.hexdigest() != _checksum:
+            _data_integrity = "❌"
+            if _filename.endswith(".txt"): 
+                _msg += f"\n* Checksum for {_filename} failed! This means that the plain text data for Brieven van Hooft at DBNL has changed and that either you need to obtain the older files, or the annotation pipeline needs to be rerun! (contact hennie.brugman@di.huc.knaw.nl and proycon@anaproy.nl)"
+            elif _filename.endswith(".json"): 
+                _msg += f"\n* Checksum for {_filename} failed! This means that STAM model for Brieven van Hooft has changed and the notebook needs to adapt to the new version (contact hennie.brugman@di.huc.knaw.nl and proycon@anaproy.nl)"
+    
+    if _data_downloaded and _data_integrity == "✅":
         #load the STAM model (AnnotationStore) into the variable `store`
         store = stam.AnnotationStore(file="hoof001hwva.output.store.stam.json")
-        data_loaded = "✅"
+        _data_loaded = "✅"
     else:
-        data_loaded = "❌"
+        store = None
+        _data_loaded = "❌"
 
-    mo.md(f"* Data loaded? {data_loaded}")
-    return data_loaded, store
+    _md = f"* Data download ready {_data_downloaded}\n* Data integrity check? {_data_integrity} {_msg}\n* Data loaded? {_data_loaded}\n"
+    mo.stop(store is None, mo.md(_md))
+    mo.md(_md)
+    return store
 
 
 @app.cell
-def __(mo):
+def __(mo, store):
+    mo.stop(store is None)
     mo.md(
         """
         ## Data exploration
@@ -341,9 +330,8 @@ def __(
         _html = "(no letters selected)"
         query = "(no query provided)"
         letter_metadata = polars.DataFrame()
-        highlights_md = ""
     mo.Html(_html)
-    return highlights_md, letter_metadata, query
+    return letter_metadata, query
 
 
 @app.cell
@@ -366,9 +354,9 @@ def __(letter_metadata):
 
 
 @app.cell
-def __(mo):
+def __(mo, store):
     #this cell produces the custom query form
-
+    mo.stop(store is None)
     queryform = mo.ui.text_area(label="Enter a query. Subqueries can be used to specify highlights. Use [STAMQL syntax](https://github.com/annotation/stam/tree/master/extensions/stam-query):",full_width=True, rows=25).form()
 
     mo.md(f"""
@@ -394,7 +382,8 @@ def __(mo, queryform, store):
 
 
 @app.cell
-def __(mo):
+def __(mo, store):
+    mo.stop(store is None)
     mo.md(
         r"""
         ## Custom Query Examples
@@ -531,11 +520,6 @@ def __(mo):
         ```
         """
     )
-    return
-
-
-@app.cell
-def __():
     return
 
 
