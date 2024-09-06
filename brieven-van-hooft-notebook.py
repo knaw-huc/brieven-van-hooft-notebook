@@ -67,6 +67,7 @@ def __():
     from natsort import natsorted
     import stam
 
+    import os
     import os.path
     from urllib.request import urlretrieve
 
@@ -80,6 +81,7 @@ def __():
     if not os.path.exists("hoof001hwva.output.store.stam.json"):
         #TODO: adapt link to Zenodo before final publication
         urlretrieve("https://download.anaproy.nl/hoof001hwva.output.store.stam.json","hoof001hwva.output.store.stam.json")
+    os.sync()
     data_downloaded = "✅"
 
     mo.md(f"* Data download ready? {data_downloaded}")
@@ -94,7 +96,8 @@ def __(data_downloaded, mo):
         checksums = {
             "hoof001hwva02.txt":"5f0df29a5ea14e87bc66c3a8e8012ec966a8a948b709cc80504c6fb5c2e9d82b",
             "hoof001hwva03.txt":"4c0a23a238b6da382c6a0c5334a867d8e3ef4cb081aae37c5104cf612cbeb64a",
-            "hoof001hwva04.txt":"6a2f9c4454f0db71a84c774418edaa9adc4ee19a5b3da00f051dd8c6b2f691df"
+            "hoof001hwva04.txt":"6a2f9c4454f0db71a84c774418edaa9adc4ee19a5b3da00f051dd8c6b2f691df",
+            "hoof001hwva.output.store.stam.json": "f56baccb3dc8ca88d1f6327f806c173a954391e42c5236e76cc5a9284e7521ec"
         }
         data_integrity = "✅"
         _msg = ""
@@ -104,7 +107,10 @@ def __(data_downloaded, mo):
                 m.update(f.read())
             if m.hexdigest() != checksum:
                 data_integrity = "❌"
-                msg = f"\n* Checksum for {filename} failed! This means that the plain text data for Brieven van Hooft at DBNL has changed and that either you need to obtain the older files, or the annotation pipeline needs to be rerun! (contact hennie.brugman@di.huc.knaw.nl and proycon@anaproy.nl)"
+                if filename.endswith(".txt"): 
+                    msg = f"\n* Checksum for {filename} failed! This means that the plain text data for Brieven van Hooft at DBNL has changed and that either you need to obtain the older files, or the annotation pipeline needs to be rerun! (contact hennie.brugman@di.huc.knaw.nl and proycon@anaproy.nl)"
+                elif filename.endswith(".json"): 
+                    msg = f"\n* Checksum for {filename} failed! This means that STAM model for Brieven van Hooft has changed and the notebook needs to adapt to the new version (contact hennie.brugman@di.huc.knaw.nl and proycon@anaproy.nl)"
         
     mo.md(f"* Data integrity check? {data_integrity} {_msg}")
     return checksum, checksums, data_integrity, f, filename, hashlib, m, msg
@@ -116,6 +122,8 @@ def __(data_downloaded, data_integrity, mo, stam):
         #load the STAM model (AnnotationStore) into the variable `store`
         store = stam.AnnotationStore(file="hoof001hwva.output.store.stam.json")
         data_loaded = "✅"
+    else:
+        data_loaded = "❌"
 
     mo.md(f"* Data loaded? {data_loaded}")
     return data_loaded, store
