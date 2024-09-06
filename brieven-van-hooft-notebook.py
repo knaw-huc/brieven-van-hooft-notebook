@@ -81,7 +81,7 @@ def __(mo, natsorted, os, polars, stam, urlretrieve):
     if not os.path.exists("hoof001hwva.output.store.stam.json"):
         #TODO: adapt link to Zenodo before final publication
         urlretrieve("https://download.anaproy.nl/hoof001hwva.output.store.stam.json","hoof001hwva.output.store.stam.json")
-    os.sync()
+        os.sync()
     _data_downloaded = "✅"
 
     _checksums = {
