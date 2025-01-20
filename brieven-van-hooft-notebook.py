@@ -413,11 +413,11 @@ def __(mo, store):
             SELECT ANNOTATION ?adj WHERE
                 RELATION ?letter EMBEDS;
                 DATA "gustave-pos" "head" = "ADJ"; 
-                {
-                SELECT ANNOTATION ?adv WHERE
-                    RELATION ?letter EMBEDS;
-                    DATA "gustave-pos" "head" = "BW";
-                }
+            |
+            SELECT ANNOTATION ?adv WHERE
+                RELATION ?letter EMBEDS;
+                DATA "gustave-pos" "head" = "BW";
+            }
             }
         ```
 
@@ -517,7 +517,16 @@ def __(mo, store):
            }
          }
         }
+
+        ### Search for a specific part annotation 
+
+        This returns all annotations that were categorised as 'greeting':
+
         ```
+        SELECT ANNOTATION ?greeting WHERE
+            DATA "brieven-van-hooft-categories" "part" = "greeting";
+        ```
+
         """
     )
     return
